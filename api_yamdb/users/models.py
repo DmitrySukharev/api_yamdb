@@ -18,3 +18,11 @@ class User(AbstractUser):
         choices=[(tag, tag.value) for tag in RoleChoices],
         default="user",
     )
+
+    confirmation_code = models.CharField(
+        max_length=60,
+        blank=True
+    )
+
+    def __str__(self):
+        return self.username
