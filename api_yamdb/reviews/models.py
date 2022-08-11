@@ -36,7 +36,7 @@ class Title(models.Model):
         null=True,
         related_name='titles',
     )
-    genres = models.ManyToManyField(Genre, db_table='title_genres')
+    genre = models.ManyToManyField(Genre, db_table='title_genres')
 
     class Meta():
         ordering = ('name',)
