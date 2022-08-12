@@ -3,6 +3,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, generics, mixins, viewsets
 
 from reviews.models import Category, Genre, Title
+from .permissions import AdminOrReadOnly
 from .serializers import CategorySerializer, GenreSerializer
 from .serializers import TitleReadSerializer, TitleWriteSerializer
 
@@ -34,6 +35,7 @@ class CategoryViewSet(ListCreateDestroyViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     lookup_field = 'slug'
+    permission_classes = (AdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
 
@@ -42,6 +44,7 @@ class GenreViewSet(ListCreateDestroyViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     lookup_field = 'slug'
+    permission_classes = (AdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
 
@@ -59,6 +62,7 @@ class TitleFilter(FilterSet):
 
 class TitleList(generics.ListCreateAPIView):
     queryset = Title.objects.all()
+    permission_classes = (AdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
 
@@ -70,6 +74,7 @@ class TitleList(generics.ListCreateAPIView):
 
 class TitleDetail(RetrievePatchDestroyAPIView):
     queryset = Title.objects.all()
+    permission_classes = (AdminOrReadOnly,)
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
