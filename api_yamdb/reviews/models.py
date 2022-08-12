@@ -57,7 +57,7 @@ class Review(models.Model):
             MaxValueValidator(10),
             MinValueValidator(1)
         ])
-    created = models.DateTimeField(
+    pub_date = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Дата отзыва'
     )
@@ -73,7 +73,7 @@ class Review(models.Model):
     )
 
     class Meta:
-        ordering = ('-created',)
+        ordering = ('-pub_date',)
         constraints = [
             models.UniqueConstraint(
                 fields=['title', 'author'],
@@ -85,7 +85,7 @@ class Review(models.Model):
 class Comments(models.Model):
     """Комментарии пользователей к отзывам"""
     text = models.TextField(verbose_name='Текст комментария')
-    created = models.DateTimeField(
+    pub_date = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Дата комментария'
     )
@@ -101,4 +101,4 @@ class Comments(models.Model):
     )
 
     class Meta:
-        ordering = ('-created',)
+        ordering = ('-pub_date',)
