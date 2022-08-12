@@ -74,3 +74,31 @@ class Review(models.Model):
 
     class Meta:
         ordering = ('-created',)
+        constraints = [
+            models.UniqueConstraint(
+                fields=['title', 'author'],
+                name='unique_review'
+            ),
+        ]
+
+
+class Comments(models.Model):
+    """Комментарии пользователей к отзывам"""
+    text = models.TextField(verbose_name='Текст комментария')
+    created = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата комментария'
+    )
+    review = models.ForeignKey(
+        Review,
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+
+    class Meta:
+        ordering = ('-created',)
