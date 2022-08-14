@@ -1,3 +1,5 @@
+from datetime import date
+
 from rest_framework import serializers
 
 from reviews.models import Category, Genre, Title
@@ -35,3 +37,10 @@ class TitleWriteSerializer(TitleReadSerializer):
         queryset=Genre.objects.all(),
         many=True,
     )
+
+    def validate_year(self, value):
+        current_year = date.today().year
+        if value > current_year:
+            msg = 'Год выхода произведения не может быть больше текущего!'
+            raise serializers.ValidationError(msg)
+        return value
