@@ -1,4 +1,7 @@
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
+
+from users.models import User
 
 
 class Category(models.Model):
@@ -43,3 +46,59 @@ class Title(models.Model):
 
     def __str__(self):
         return self.name[:30]
+
+
+class Review(models.Model):
+    """Отзывы пользователей и их оценки произведений"""
+    text = models.TextField(verbose_name='Отзыв')
+    score = models.IntegerField(
+        verbose_name='Пользовательская оценка',
+        validators=[
+            MaxValueValidator(10),
+            MinValueValidator(1)
+        ])
+    pub_date = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата отзыва'
+    )
+    title = models.ForeignKey(
+        Title,
+        on_delete=models.CASCADE,
+        related_name='reviews'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='reviews'
+    )
+
+    class Meta:
+        ordering = ('-pub_date',)
+        constraints = [
+            models.UniqueConstraint(
+                fields=['title', 'author'],
+                name='unique_review'
+            ),
+        ]
+
+
+class Comments(models.Model):
+    """Комментарии пользователей к отзывам"""
+    text = models.TextField(verbose_name='Текст комментария')
+    pub_date = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата комментария'
+    )
+    review = models.ForeignKey(
+        Review,
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+
+    class Meta:
+        ordering = ('-pub_date',)

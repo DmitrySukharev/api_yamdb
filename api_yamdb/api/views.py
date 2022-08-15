@@ -1,12 +1,15 @@
+from django.shortcuts import get_object_or_404
 from django_filters import CharFilter, FilterSet, NumberFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, generics, mixins, status, viewsets
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
-from reviews.models import Category, Genre, Title
+from reviews.models import Category, Comments, Genre, Review, Title
 from .permissions import AdminOrReadOnly
 from .serializers import CategorySerializer, GenreSerializer
 from .serializers import TitleReadSerializer, TitleWriteSerializer
+from .serializers import ReviewSerializer, CommentsSerializer
 
 
 class ListCreateDestroyViewSet(mixins.ListModelMixin,
@@ -30,6 +33,14 @@ class RetrievePatchDestroyAPIView(mixins.RetrieveModelMixin,
 
     def delete(self, request, *args, **kwargs):
         return self.destroy(request, *args, **kwargs)
+
+
+class ListCreateUpdateDestroyViewSet(mixins.ListModelMixin,
+                                     mixins.CreateModelMixin,
+                                     mixins.UpdateModelMixin,
+                                     mixins.DestroyModelMixin,
+                                     viewsets.GenericViewSet):
+    pass
 
 
 class CategoryViewSet(ListCreateDestroyViewSet):
@@ -107,3 +118,29 @@ class TitleDetail(RetrievePatchDestroyAPIView):
             instance._prefetched_objects_cache = {}
         new_serializer = TitleReadSerializer(instance)
         return Response(new_serializer.data)
+
+
+class ReviewViewSet(ListCreateUpdateDestroyViewSet):
+    serializer_class = ReviewSerializer
+
+    def get_queryset(self):
+        title = get_object_or_404(Title, id=self.kwargs.get("title_id"))
+        new_queryset = title.reviews.all()
+        return new_queryset
+
+    def perform_create(self, serializer):
+        title = get_object_or_404(Title, id=self.kwargs.get("title_id"))
+        serializer.save(author=self.request.user, title=title)
+
+
+class CommentsViewSet(ListCreateUpdateDestroyViewSet):
+    serializer_class = CommentsSerializer
+
+    def get_queryset(self):
+        review = get_object_or_404(Review, id=self.kwargs.get("review_id"))
+        new_queryset = review.comments.all()
+        return new_queryset
+
+    def perform_create(self, serializer):
+        review = get_object_or_404(Review, id=self.kwargs.get("review_id"))
+        serializer.save(author=self.request.user, review=review)

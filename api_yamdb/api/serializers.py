@@ -2,7 +2,7 @@ from datetime import date
 
 from rest_framework import serializers
 
-from reviews.models import Category, Genre, Title
+from reviews.models import Category, Comments, Genre, Review, Title
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -44,3 +44,18 @@ class TitleWriteSerializer(TitleReadSerializer):
             msg = 'Год выхода произведения не может быть больше текущего!'
             raise serializers.ValidationError(msg)
         return value
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ('text', 'score')
+
+
+class CommentsSerializer(serializers.ModelSerializer):
+    author = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = Comments
+        fields = ("__all__")
+        read_only_fields = ('title',)
