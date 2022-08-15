@@ -16,16 +16,17 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            from reviews.models import Category, Genre, Title
-            self.stdout.write('Модели Category/Genre/Title импортированы')
-
-            files_models = (
+            from reviews.models import Category, Comments, Genre, Review, Title
+            self.stdout.write('Модели Category/Genre/Title/Review/Comments ок')
+            FILES_AND_MODELS = (
+                ('users.csv', User),
                 ('category.csv', Category),
                 ('genre.csv', Genre),
                 ('titles.csv', Title),
-                ('users.csv', User),
+                ('review.csv', Review),
+                ('comments.csv', Comments),
             )
-            for file, class_name in files_models:
+            for file, class_name in FILES_AND_MODELS:
                 file_path = os.path.join(DATA_DIR, file)
                 with open(file_path, newline='', encoding='utf-8') as csvfile:
                     reader = csv.DictReader(csvfile)
@@ -34,36 +35,23 @@ class Command(BaseCommand):
                         if class_name == Title:
                             cat_id = row['category']
                             row['category'] = Category.objects.get(id=cat_id)
+                        if class_name == Review:
+                            title_id = row['title_id']
+                            row['title'] = Title.objects.get(id=title_id)
+                            author_id = row['author']
+                            row['author'] = User.objects.get(id=author_id)
+                        if class_name == Comments:
+                            review_id = row['review_id']
+                            row['review'] = Review.objects.get(id=review_id)
+                            author_id = row['author']
+                            row['author'] = User.objects.get(id=author_id)
                         class_name.objects.update_or_create(
                             id=row['id'], defaults=row)
                         counter += 1
                 msg = f'Залито объектов {class_name.__name__}: {counter}'
                 self.stdout.write(msg)
         except ImportError:
-            self.stdout.write('Не могу импортировать Category/Genre/Title')
-        except FileNotFoundError:
-            raise CommandError('Как минимум один из csv файлов отсутствует!')
-
-        try:
-            from reviews.models import Comment, Review
-            self.stdout.write('Модели Review / Comment импортированы')
-            files_models = (
-                # ('static/data/review.csv', Review),       # Требуется прописать в row объекты вместо id для связанных полей, как для Title Category
-                # ('static/data/comments.csv', Comment),    # Требуется прописать в row объекты вместо id для связанных полей, как для Title Category
-            )
-            for file, class_name in files_models:
-                file_path = os.path.join(DATA_DIR, file)
-                with open(file_path, newline='', encoding='utf-8') as csvfile:
-                    reader = csv.DictReader(csvfile)
-                    counter = 0
-                    for row in reader:
-                        class_name.objects.update_or_create(
-                            id=row['id'], defaults=row)
-                        counter += 1
-                msg = f'Залито объектов {class_name.__name__}: {counter}'
-                self.stdout.write(msg)
-        except ImportError:
-            self.stdout.write('Не могу импортировать Review / Comment')
+            raise CommandError('Не могу импортировать нужные модели')
         except FileNotFoundError:
             raise CommandError('Как минимум один из csv файлов отсутствует!')
 
