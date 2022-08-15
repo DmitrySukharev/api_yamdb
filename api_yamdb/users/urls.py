@@ -17,5 +17,5 @@ urlpatterns = [
         TokenObtainPairView.as_view(serializer_class=ConfCodeSerializer),
         name="token_obtain_pair",
     ),
-    path("/", include(router.urls)),
+    path("", include(router.urls)),
 ]
