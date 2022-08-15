@@ -6,7 +6,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from reviews.models import Category, Comments, Genre, Review, Title
-from .permissions import AdminOrReadOnly
+from .permissions import AdminOrReadOnly, AuthorAdminModeratorOrReadOnly
 from .serializers import CategorySerializer, GenreSerializer
 from .serializers import TitleReadSerializer, TitleWriteSerializer
 from .serializers import ReviewSerializer, CommentsSerializer
@@ -35,7 +35,8 @@ class RetrievePatchDestroyAPIView(mixins.RetrieveModelMixin,
         return self.destroy(request, *args, **kwargs)
 
 
-class ListCreateUpdateDestroyViewSet(mixins.ListModelMixin,
+class ListCreateUpdateDestroyViewSet(mixins.RetrieveModelMixin,
+                                     mixins.ListModelMixin,
                                      mixins.CreateModelMixin,
                                      mixins.UpdateModelMixin,
                                      mixins.DestroyModelMixin,
@@ -122,6 +123,7 @@ class TitleDetail(RetrievePatchDestroyAPIView):
 
 class ReviewViewSet(ListCreateUpdateDestroyViewSet):
     serializer_class = ReviewSerializer
+    permission_classes = (AuthorAdminModeratorOrReadOnly,)
 
     def get_queryset(self):
         title = get_object_or_404(Title, id=self.kwargs.get("title_id"))
