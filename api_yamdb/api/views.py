@@ -2,10 +2,9 @@ from django.shortcuts import get_object_or_404
 from django_filters import CharFilter, FilterSet, NumberFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, generics, mixins, status, viewsets
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
-from reviews.models import Category, Comments, Genre, Review, Title
+from reviews.models import Category, Genre, Review, Title
 from .permissions import AdminOrReadOnly, AuthorAdminModeratorOrReadOnly
 from .serializers import CategorySerializer, GenreSerializer
 from .serializers import TitleReadSerializer, TitleWriteSerializer
@@ -137,6 +136,7 @@ class ReviewViewSet(ListCreateUpdateDestroyViewSet):
 
 class CommentsViewSet(ListCreateUpdateDestroyViewSet):
     serializer_class = CommentsSerializer
+    permission_classes = (AuthorAdminModeratorOrReadOnly,)
 
     def get_queryset(self):
         review = get_object_or_404(Review, id=self.kwargs.get("review_id"))
