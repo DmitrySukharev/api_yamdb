@@ -5,12 +5,12 @@ from .views import CategoryViewSet, GenreViewSet
 from .views import ReviewViewSet, CommentsViewSet
 
 router_1 = DefaultRouter()
-router_1.register('v1/categories', CategoryViewSet)
-router_1.register('v1/genres', GenreViewSet)
-router_1.register(r'v1/titles/(?P<title_id>\d+)/reviews', ReviewViewSet,
+router_1.register('categories', CategoryViewSet)
+router_1.register('genres', GenreViewSet)
+router_1.register(r'titles/(?P<title_id>\d+)/reviews', ReviewViewSet,
                   basename='reviews')
 router_1.register(
-    r'v1/titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)/comments',
+    r'titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)/comments',
     CommentsViewSet,
     basename='comments')
 
