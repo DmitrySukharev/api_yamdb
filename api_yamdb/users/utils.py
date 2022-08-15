@@ -10,9 +10,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 class RoleChoices(Enum):
     #   name    value
-    USER = "user"
-    MODERATOR = "moderator"
-    ADMIN = "admin"
+    user = "user"
+    moderator = "moderator"
+    admin = "admin"
 
 
 def email_check(email):
