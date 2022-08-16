@@ -6,9 +6,11 @@ from .utils import RoleChoices
 
 class User(AbstractUser):
     "Модель пользователя"
-    username = models.CharField(max_length=50, unique=True)
-    email = models.CharField(max_length=40, unique=True)
+    username = models.CharField(max_length=150, unique=True)
+    email = models.CharField(max_length=254, unique=True)
 
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
     password = models.CharField(max_length=20, blank=True, null=True)
 
     bio = models.TextField(
@@ -27,6 +29,9 @@ class User(AbstractUser):
         max_length=6,
         blank=True,
     )
+
+    class Meta:
+        ordering = ('username',)
 
     def __str__(self):
         return self.username
