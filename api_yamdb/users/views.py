@@ -33,22 +33,31 @@ class UserViewSet(viewsets.ModelViewSet):
         url_name="me",
     )
     def me(self, request, *args, **kwargs):
-        instance = self.request.user
-        serializer = self.get_serializer(instance)
+        user = self.request.user
+        request_data = request.data.copy()
+        serializer = self.get_serializer(user)
         if self.request.method == "PATCH":
-            serializer = self.get_serializer(instance, data=request.data, partial=True)
+            # Проверка невозможности не-админу поменять себе роль
+            new_role = request_data.get('role')
+            if (
+                new_role is not None and new_role != user.role
+                and user.role != 'admin' and not user.is_superuser
+            ):
+                pass
+                request_data['role'] = user.role
+            serializer = self.get_serializer(user, data=request_data, partial=True)
             serializer.is_valid()
             serializer.save()
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def mail_code(request):
-    
+
    # if "username" not in request.data and "email" not in request.data:
     #    raise ValidationError
-    
+
     email = request.data.get("email")
     username = request.data.get("username")
 
