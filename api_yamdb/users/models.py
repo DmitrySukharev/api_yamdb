@@ -19,8 +19,8 @@ class User(AbstractUser):
     role = models.CharField(
         "Права",
         max_length=20,
-        choices=[(tag.name, tag.value) for tag in RoleChoices],
-        default=RoleChoices.USER.value,
+        choices=[(tag.value, tag.name) for tag in RoleChoices],
+        default=RoleChoices.user.value,
     )
 
     confirmation_code = models.CharField(

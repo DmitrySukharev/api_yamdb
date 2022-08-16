@@ -7,7 +7,8 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from rest_framework.exceptions import ValidationError
+from rest_framework import status
 from .models import User
 from .permissions import IsAdmin
 from .serializers import UserSerializer
@@ -16,7 +17,7 @@ from .utils import confirmation_mail, email_check, generate_conf_code
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    permission_classes = [IsAdminUser, IsAdmin]
+    permission_classes = [IsAdmin,]
     serializer_class = UserSerializer
     lookup_field = "username"
     filter_backends = [filters.SearchFilter]
@@ -44,8 +45,18 @@ class UserViewSet(viewsets.ModelViewSet):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def mail_code(request):
+    
+   # if "username" not in request.data and "email" not in request.data:
+    #    raise ValidationError
+    
     email = request.data.get("email")
-    if email is None:
+    username = request.data.get("username")
+
+    if not request.data:
+        message = "no data"
+        return Response({"email": message}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not email:
         message = "Have not any email? In this case try to guess your code"
 
     else:
@@ -54,7 +65,7 @@ def mail_code(request):
                 user = get_object_or_404(User, email=email)
             except Http404:
                 user = User.objects.create(
-                    username=request.data.get("username"),
+                    username=username,
                     email=email,
                 )
 
