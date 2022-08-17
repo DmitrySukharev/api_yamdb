@@ -26,6 +26,7 @@ class AuthorAdminModeratorOrReadOnly(permissions.BasePermission):
         return (request.method in permissions.SAFE_METHODS
                 or obj.author == request.user
                 or request.user.role == 'admin' or request.user.is_superuser
+                or request.user.role == 'moderator'
                 or (
                     request.method == 'POST'
                     and request.user.is_authenticated))
