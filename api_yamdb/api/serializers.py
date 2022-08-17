@@ -1,4 +1,5 @@
 from datetime import date
+from django.db.models import Avg
 
 from rest_framework import serializers
 
@@ -20,11 +21,18 @@ class GenreSerializer(serializers.ModelSerializer):
 class TitleReadSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'description', 'genre', 'category')
+        fields = (
+            'id', 'name', 'year', 'rating', 'description', 'genre',
+            'category')
         read_only_fields = ('id',)
+
+    def get_rating(self, obj):
+        rating = Review.objects.filter(title_id=obj.id).aggregate(Avg('score'))
+        return rating['score__avg']
 
 
 class TitleWriteSerializer(TitleReadSerializer):
