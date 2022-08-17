@@ -34,15 +34,6 @@ class RetrievePatchDestroyAPIView(mixins.RetrieveModelMixin,
         return self.destroy(request, *args, **kwargs)
 
 
-class ListCreateUpdateDestroyViewSet(mixins.RetrieveModelMixin,
-                                     mixins.ListModelMixin,
-                                     mixins.CreateModelMixin,
-                                     mixins.UpdateModelMixin,
-                                     mixins.DestroyModelMixin,
-                                     viewsets.GenericViewSet):
-    pass
-
-
 class CategoryViewSet(ListCreateDestroyViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -120,7 +111,7 @@ class TitleDetail(RetrievePatchDestroyAPIView):
         return Response(new_serializer.data)
 
 
-class ReviewViewSet(ListCreateUpdateDestroyViewSet):
+class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     permission_classes = (AuthorAdminModeratorOrReadOnly,)
 
@@ -134,7 +125,7 @@ class ReviewViewSet(ListCreateUpdateDestroyViewSet):
         serializer.save(author=self.request.user, title=title)
 
 
-class CommentsViewSet(ListCreateUpdateDestroyViewSet):
+class CommentsViewSet(viewsets.ModelViewSet):
     serializer_class = CommentsSerializer
     permission_classes = (AuthorAdminModeratorOrReadOnly,)
 
