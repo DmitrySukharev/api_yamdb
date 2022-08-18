@@ -11,9 +11,9 @@ from rest_framework.exceptions import ValidationError
 from rest_framework import status
 from .models import User
 from .permissions import IsAdmin
-from .serializers import UserSerializer
+from .serializers import UserSerializer, RegSerializer
 from .utils import confirmation_mail, email_check, generate_conf_code
-
+from rest_framework.views import APIView
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -41,6 +41,48 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer.save()
         return Response(serializer.data)
 
+#####
+
+def email_unique(new_email):
+    current_emails = []
+    users = User.objects.all()
+    for user in users:
+        current_emails.append(user.email)
+    
+    if new_email in current_emails:
+        return False
+    
+    return True
+
+
+class MailCodeView(APIView):
+    serializer_class = RegSerializer
+    
+    def mail(self, serializer):
+        serializer = self.serializer_class(data=self.request.data)
+        serializer.is_valid(raise_exception=False)
+        
+        code = generate_conf_code()
+        confirmation_mail(email, code)
+        
+        serializer.save()
+        return Response(serializer.data)
+
+
+def without_data(email, username):
+    fields = {"email": email, "username": username}
+    missing = []
+    for field in fields:
+        if fields[field] is None:
+            missing.append(field)
+
+    message = f'missing fields: {missing}'
+
+    if missing:
+        return Response({message}, status=status.HTTP_400_BAD_REQUEST)
+
+
+#####
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -48,13 +90,29 @@ def mail_code(request):
     
    # if "username" not in request.data and "email" not in request.data:
     #    raise ValidationError
-    
+        
     email = request.data.get("email")
     username = request.data.get("username")
 
-    if not request.data:
-        message = "no data"
-        return Response({"email": message}, status=status.HTTP_400_BAD_REQUEST)
+    without_data(email, username)
+    
+    if email is None or username is None:
+        if email is None:   
+            return Response({"email": "expected"}, status=status.HTTP_400_BAD_REQUEST)
+        elif username is None:
+            return Response({"username": "expected"}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not email_unique(email):
+        message = f"User with email {email} already exists"
+        return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
+
+    if username == 'me' or username is None:
+        message = "restricted username"
+        return Response({"username": message}, status=status.HTTP_400_BAD_REQUEST)
+
+   # if not request.data:
+   #     message = "no data"
+   #     return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
 
     if not email:
         message = "Have not any email? In this case try to guess your code"
@@ -77,5 +135,6 @@ def mail_code(request):
             user.save()
         else:
             message = "You should provide valid email"
+            return Response({"message": message})
 
-    return Response({"email": message})
+    return Response({"email": email, "username": username}, status=status.HTTP_200_OK)
