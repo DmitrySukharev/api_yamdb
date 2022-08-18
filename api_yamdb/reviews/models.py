@@ -1,16 +1,17 @@
-from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
 
 from users.models import User
 
 
 class Category(models.Model):
     """Категории произведений."""
-    name = models.CharField(max_length=256)
+    name = models.CharField('Категория', max_length=256)
     slug = models.SlugField(unique=True)
 
     class Meta():
         ordering = ('name',)
+        verbose_name_plural = 'Категории'
 
     def __str__(self):
         return self.name[:20]
@@ -18,11 +19,12 @@ class Category(models.Model):
 
 class Genre(models.Model):
     """Жанры произведений; у произведения может быть несколько жанров."""
-    name = models.CharField(max_length=256)
+    name = models.CharField('Жанр', max_length=256)
     slug = models.SlugField(unique=True)
 
     class Meta():
         ordering = ('name',)
+        verbose_name_plural = 'Жанры'
 
     def __str__(self):
         return self.name[:20]
@@ -30,19 +32,25 @@ class Genre(models.Model):
 
 class Title(models.Model):
     """Произведения (книги, фильмы, музыка и пр.)."""
-    name = models.CharField(max_length=256)
-    year = models.IntegerField()
-    description = models.TextField(blank=True, null=True)
+    name = models.CharField('Название', max_length=256)
+    year = models.IntegerField('Год')
+    description = models.TextField('Описание', blank=True, null=True)
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
         null=True,
         related_name='titles',
+        verbose_name='Категория'
     )
-    genre = models.ManyToManyField(Genre, db_table='title_genres')
+    genre = models.ManyToManyField(
+        Genre,
+        db_table='title_genres',
+        verbose_name='Жанр'
+    )
 
     class Meta():
         ordering = ('name',)
+        verbose_name_plural = 'Произведения'
 
     def __str__(self):
         return self.name[:30]
@@ -64,12 +72,14 @@ class Review(models.Model):
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
-        related_name='reviews'
+        related_name='reviews',
+        verbose_name='Произведение'
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='reviews'
+        related_name='reviews',
+        verbose_name='Автор'
     )
 
     class Meta:
@@ -80,6 +90,7 @@ class Review(models.Model):
                 name='unique_review'
             ),
         ]
+        verbose_name_plural = 'Отзывы'
 
 
 class Comments(models.Model):
@@ -92,13 +103,16 @@ class Comments(models.Model):
     review = models.ForeignKey(
         Review,
         on_delete=models.CASCADE,
-        related_name='comments'
+        related_name='comments',
+        verbose_name='Отзыв'
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='comments'
+        related_name='comments',
+        verbose_name='Автор'
     )
 
     class Meta:
         ordering = ('-pub_date',)
+        verbose_name_plural = 'Комментарии'
