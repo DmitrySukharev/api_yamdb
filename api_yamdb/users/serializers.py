@@ -1,7 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
 from .utils import generate_token
@@ -10,22 +9,26 @@ from .utils import generate_token
 class ConfCodeSerializer(serializers.Serializer):
     """Сериализатор токена."""
 
-    username = serializers.CharField(max_length=40)
+    username = serializers.CharField(max_length=150)
     confirmation_code = serializers.CharField(max_length=6)
 
-    def validate_confirmation_code(self, confirmation_code):
-        if not User.objects.filter(
-                confirmation_code=confirmation_code,
-            ).exists():
-            message = "wrong code"
-            raise serializers.ValidationError
-    
-        return confirmation_code
+    def validate_username(self, value):
+        if not get_object_or_404(User, username=value):
+            raise serializers.ValidationError()
+        return value
 
-    def validate_username(self, username):
-        get_object_or_404(User, username=username)
+    def validate_confirmation_code(self, value):
+        if not len(value) == 6 or not value.isdigit():
+            err_msg = 'Confirmation_code должен состоять из 6 цифр'
+            raise serializers.ValidationError(err_msg)
+        return value
 
-        return serializers.ValidationError
+    def validate(self, data):
+        user = get_object_or_404(User, username=data.get('username'))
+        if not user.confirmation_code == data.get('confirmation_code'):
+            raise serializers.ValidationError('Wrong confirmation code')
+        else:
+            return generate_token(user)
 
 
 class UserSerializer(serializers.ModelSerializer):

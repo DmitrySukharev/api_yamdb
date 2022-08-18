@@ -43,7 +43,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 new_role is not None and new_role != user.role
                 and user.role != 'admin' and not user.is_superuser
             ):
-                pass
                 request_data['role'] = user.role
             serializer = self.get_serializer(user, data=request_data, partial=True)
             serializer.is_valid()
