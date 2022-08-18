@@ -67,19 +67,12 @@ def without_data(email, username):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def mail_code(request):
-<<<<<<< HEAD
 
-   # if "username" not in request.data and "email" not in request.data:
-    #    raise ValidationError
-
-=======
-        
->>>>>>> feature/auth
     email = request.data.get("email")
     username = request.data.get("username")
 
     without_data(email, username)
-    
+
     if username == 'me' or username is None:
         message = "restricted username"
         return Response({"username": message}, status=status.HTTP_400_BAD_REQUEST)
