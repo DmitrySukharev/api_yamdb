@@ -1,11 +1,12 @@
 import random
 from enum import Enum
 
-from api_yamdb.settings import NOREPLY_EMAIL
 from django.core import mail
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from api_yamdb.settings import NOREPLY_EMAIL
 
 
 class RoleChoices(Enum):

@@ -1,13 +1,10 @@
-from django.core.validators import validate_email
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, mixins, status, viewsets
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
 from .permissions import IsAdmin
@@ -17,26 +14,26 @@ from .utils import confirmation_mail, email_check, generate_conf_code
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    permission_classes = [IsAdmin,]
+    permission_classes = [IsAdmin, ]
     serializer_class = UserSerializer
-    lookup_field = "username"
+    lookup_field = 'username'
     filter_backends = [filters.SearchFilter]
     search_fields = [
-        "username",
+        'username',
     ]
 
     @action(
-        methods=["patch", "get"],
+        methods=['patch', 'get'],
         detail=False,
         permission_classes=[IsAuthenticated],
-        url_path="me",
-        url_name="me",
+        url_path='me',
+        url_name='me',
     )
     def me(self, request, *args, **kwargs):
         user = self.request.user
         request_data = request.data.copy()
         serializer = self.get_serializer(user)
-        if self.request.method == "PATCH":
+        if self.request.method == 'PATCH':
             # Проверка невозможности не-админу поменять себе роль
             new_role = request_data.get('role')
             if (
@@ -44,55 +41,51 @@ class UserViewSet(viewsets.ModelViewSet):
                 and user.role != 'admin' and not user.is_superuser
             ):
                 request_data['role'] = user.role
-            serializer = self.get_serializer(user, data=request_data, partial=True)
+            serializer = self.get_serializer(
+                user, data=request_data, partial=True)
             serializer.is_valid()
             serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-def without_data(email, username):
-    fields = {"email": email, "username": username}
-    missing = []
-    for field in fields:
-        if fields[field] is None:
-            missing.append(field)
-
-    message = f'missing fields: {missing}'
-
-    if missing:
-        return Response({message}, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(["POST"])
+@api_view(['POST'])
 @permission_classes([AllowAny])
 def mail_code(request):
 
-    email = request.data.get("email")
-    username = request.data.get("username")
+    email = request.data.get('email')
+    username = request.data.get('username')
 
-    without_data(email, username)
+    error_response = {}
 
-    if username == 'me' or username is None:
-        message = "restricted username"
-        return Response({"username": message}, status=status.HTTP_400_BAD_REQUEST)
+    if not username:
+        error_response.update(
+            {'username': ['Поле username не должно быть пустым']})
 
-    if email_check(email):
-        try:
-            user = get_object_or_404(User, email=email)
-        except Http404:
-            user = User.objects.create(
-                username=username,
-                email=email,
-            )
+    if not email:
+        error_response.update(
+            {'email': ['Поле email не должно быть пустым']})
 
-        code = generate_conf_code()
+    if username == 'me':
+        error_response.update(
+            {'username': [f"'{username}' is the restricted username"]})
 
-        confirmation_mail(email, code)
-        user.confirmation_code = code
-        message = "confirmation code has been sent on your email"
-        user.save()
+    if User.objects.filter(username=username).exists():
+        error_response.update(
+            {'username': [f'Имя {username} уже используется']})
+
+    if User.objects.filter(email=email).exists():
+        error_response.update(
+            {'email': [f'Адрес {email} уже используется']})
+
+    if not email_check(email):
+        err_msg = 'You should provide a valid email address'
+        error_response.update({'email': [err_msg]})
+
+    if error_response:
+        return Response(error_response, status=status.HTTP_400_BAD_REQUEST)
     else:
-        message = "You should provide valid email"
-        return Response({"message": message})
-
-    return Response({"email": email, "username": username}, status=status.HTTP_200_OK)
+        user = User.objects.create(username=username, email=email)
+        user.confirmation_code = generate_conf_code()
+        confirmation_mail(email, user.confirmation_code)
+        user.save()
+        return Response(
+            {'email': email, 'username': username}, status=status.HTTP_200_OK)
