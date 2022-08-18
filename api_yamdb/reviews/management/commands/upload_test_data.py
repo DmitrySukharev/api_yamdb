@@ -14,6 +14,27 @@ User = get_user_model()
 class Command(BaseCommand):
     help = 'Заливает тестовые данные из csv файлов в папке static/data'
 
+    def upload_genre_titles_csv_to_SQL(self):
+        """Заливка из genre_title.csv напрямую в SQL таблицу title_genres."""
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) FROM title_genres")
+            row_count = cursor.fetchone()[0]
+            if row_count == 0:
+                file_path = os.path.join(DATA_DIR, 'genre_title.csv')
+                with open(file_path, newline='', encoding='utf-8') as csvfile:
+                    reader = csv.DictReader(csvfile)
+                    for row in reader:
+                        sql_stmt = "INSERT INTO title_genres VALUES (%s,%s,%s)"
+                        params = (row['id'], row['title_id'], row['genre_id'])
+                        cursor.execute(sql_stmt, [*params])
+                    cursor.execute("SELECT COUNT(*) FROM title_genres")
+                    row_count = cursor.fetchone()[0]
+                    msg = f'Залито записей в title_genre: {row_count}'
+                    self.stdout.write(msg)
+            else:
+                msg = 'Таблица title_genres не пуста, заливка csv отменена'
+                self.stdout.write(msg)
+
     def handle(self, *args, **options):
         try:
             from reviews.models import Category, Comments, Genre, Review, Title
@@ -55,22 +76,4 @@ class Command(BaseCommand):
         except FileNotFoundError:
             raise CommandError('Как минимум один из csv файлов отсутствует!')
 
-        # Заливка из genre_title.csv напрямую в SQL таблицу title_genres
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) FROM title_genres")
-            row_count = cursor.fetchone()[0]
-            if row_count == 0:
-                file_path = os.path.join(DATA_DIR, 'genre_title.csv')
-                with open(file_path, newline='', encoding='utf-8') as csvfile:
-                    reader = csv.DictReader(csvfile)
-                    for row in reader:
-                        sql_stmt = "INSERT INTO title_genres VALUES (%s,%s,%s)"
-                        params = (row['id'], row['title_id'], row['genre_id'])
-                        cursor.execute(sql_stmt, [*params])
-                    cursor.execute("SELECT COUNT(*) FROM title_genres")
-                    row_count = cursor.fetchone()[0]
-                    msg = f'Залито записей в title_genre: {row_count}'
-                    self.stdout.write(msg)
-            else:
-                msg = 'Таблица title_genres не пуста, заливка csv отменена'
-                self.stdout.write(msg)
+        self.upload_genre_titles_csv_to_SQL()
