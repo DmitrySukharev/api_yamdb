@@ -25,7 +25,7 @@ class ConfCodeSerializer(serializers.Serializer):
     def validate_username(self, username):
         get_object_or_404(User, username=username)
 
-            return serializers.ValidationError
+        return serializers.ValidationError
 
 
 class UserSerializer(serializers.ModelSerializer):
