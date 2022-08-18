@@ -2,13 +2,13 @@ from django.core.validators import validate_email
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, mixins, viewsets
+from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.exceptions import ValidationError
-from rest_framework import status
+
 from .models import User
 from .permissions import IsAdmin
 from .serializers import UserSerializer
@@ -51,40 +51,56 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+def without_data(email, username):
+    fields = {"email": email, "username": username}
+    missing = []
+    for field in fields:
+        if fields[field] is None:
+            missing.append(field)
+
+    message = f'missing fields: {missing}'
+
+    if missing:
+        return Response({message}, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def mail_code(request):
+<<<<<<< HEAD
 
    # if "username" not in request.data and "email" not in request.data:
     #    raise ValidationError
 
+=======
+        
+>>>>>>> feature/auth
     email = request.data.get("email")
     username = request.data.get("username")
 
-    if not request.data:
-        message = "no data"
-        return Response({"email": message}, status=status.HTTP_400_BAD_REQUEST)
+    without_data(email, username)
+    
+    if username == 'me' or username is None:
+        message = "restricted username"
+        return Response({"username": message}, status=status.HTTP_400_BAD_REQUEST)
 
-    if not email:
-        message = "Have not any email? In this case try to guess your code"
+    if email_check(email):
+        try:
+            user = get_object_or_404(User, email=email)
+        except Http404:
+            user = User.objects.create(
+                username=username,
+                email=email,
+            )
 
+        code = generate_conf_code()
+
+        confirmation_mail(email, code)
+        user.confirmation_code = code
+        message = "confirmation code has been sent on your email"
+        user.save()
     else:
-        if email_check(email):
-            try:
-                user = get_object_or_404(User, email=email)
-            except Http404:
-                user = User.objects.create(
-                    username=username,
-                    email=email,
-                )
+        message = "You should provide valid email"
+        return Response({"message": message})
 
-            code = generate_conf_code()
-
-            confirmation_mail(email, code)
-            user.confirmation_code = code
-            message = "confirmation code has been sent on your email"
-            user.save()
-        else:
-            message = "You should provide valid email"
-
-    return Response({"email": message})
+    return Response({"email": email, "username": username}, status=status.HTTP_200_OK)

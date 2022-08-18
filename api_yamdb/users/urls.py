@@ -1,7 +1,12 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
+<<<<<<< HEAD
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.views import TokenRefreshView
+=======
+from rest_framework_simplejwt.views import (TokenObtainPairView,
+                                            TokenRefreshView)
+>>>>>>> feature/auth
 
 from .serializers import ConfCodeSerializer
 from .views import UserViewSet, mail_code
