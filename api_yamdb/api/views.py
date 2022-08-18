@@ -7,8 +7,8 @@ from rest_framework.response import Response
 from reviews.models import Category, Genre, Review, Title
 from .permissions import AdminOrReadOnly, AuthorAdminModeratorOrReadOnly
 from .serializers import CategorySerializer, GenreSerializer
+from .serializers import CommentsSerializer, ReviewSerializer
 from .serializers import TitleReadSerializer, TitleWriteSerializer
-from .serializers import ReviewSerializer, CommentsSerializer
 
 
 class ListCreateDestroyViewSet(mixins.ListModelMixin,
