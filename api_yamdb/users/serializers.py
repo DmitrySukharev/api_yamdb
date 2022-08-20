@@ -1,5 +1,5 @@
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers
+from rest_framework.generics import get_object_or_404
 
 from .models import User
 from .utils import generate_token
