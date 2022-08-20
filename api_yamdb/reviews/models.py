@@ -4,30 +4,31 @@ from django.db import models
 from users.models import User
 
 
-class Category(models.Model):
-    """Категории произведений."""
-    name = models.CharField('Категория', max_length=256)
+class SimpleSlugModelTemplate(models.Model):
+    """Шаблон для создания простых моделей со Slug-ом."""
+    name = models.CharField('Название', max_length=256)
     slug = models.SlugField(unique=True)
 
     class Meta():
+        abstract = True
         ordering = ('name',)
+
+    def __str__(self):
+        return self.name[:20]
+
+
+class Category(SimpleSlugModelTemplate):
+    """Категории произведений."""
+
+    class Meta(SimpleSlugModelTemplate.Meta):
         verbose_name_plural = 'Категории'
 
-    def __str__(self):
-        return self.name[:20]
 
+class Genre(SimpleSlugModelTemplate):
+    """Жанры произведений."""
 
-class Genre(models.Model):
-    """Жанры произведений; у произведения может быть несколько жанров."""
-    name = models.CharField('Жанр', max_length=256)
-    slug = models.SlugField(unique=True)
-
-    class Meta():
-        ordering = ('name',)
+    class Meta(SimpleSlugModelTemplate.Meta):
         verbose_name_plural = 'Жанры'
-
-    def __str__(self):
-        return self.name[:20]
 
 
 class Title(models.Model):
